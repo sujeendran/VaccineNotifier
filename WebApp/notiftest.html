@@ -1,0 +1,83 @@
+<!doctype html>
+
+<head>
+    <title>Show Notification using Javascript</title>
+</head>
+
+<body>
+    <h3>Show Notification using Javascript</h3>
+    <script>
+        askForApproval();
+
+        function askForApproval() {
+            if (Notification.permission === "granted") {
+                createNotification('Test Notification', 'Vaccine Notification Message', 'images/favicon.png');
+            }
+            else {
+                Notification.requestPermission(permission => {
+                    if (permission === 'granted') {
+                        createNotification('Test Notification', 'Vaccine Notification Message', 'images/favicon.png');
+                    }
+                    else {
+                        alert('No permission to send notifications');
+                    }
+                });
+            }
+        }
+        function createNotification(title, text, icon) {
+            let notification = new Notification(title, {
+                body: text,
+                icon
+            });
+            notification.onclick = () => {
+                notification.close();
+                window.parent.focus();
+            }
+        }
+    </script>
+</body>
+
+</html>
+
+<!-- <html>
+<head>
+</head>
+
+<body>
+    <input id="mynotify" type="button" value="Trigger Notification" />
+</body>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.slim.min.js"></script>
+<script>
+
+    $(function () {
+        navigator.serviceWorker.register('/sw.js');
+
+        $("#mynotify").click(function () {
+            Notification.requestPermission().then(function (permission) {
+                if (permission != "granted") {
+                    alert("Notification failed!");
+                    return;
+                }
+
+                navigator.serviceWorker.ready.then(function (registration) {
+                    registration.showNotification("Hello world", { body: "Here is the body!", tag: "Test" });
+                });
+
+            });
+        });
+    });
+
+    setInterval(function () {
+        Notification.requestPermission().then(function (permission) {
+            if (permission != "granted") {
+                alert("Notification failed!");
+                return;
+            }
+
+            navigator.serviceWorker.ready.then(function (registration) {
+                registration.showNotification("Hello world", { body: "Here is the body!", tag: "Test" });
+            });
+        });
+    }, 30000);
+</script>
+</html> -->

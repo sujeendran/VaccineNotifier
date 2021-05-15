@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Vaccine Notifier</title>
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
+        integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css"
+        integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.css">
+    <style>
+        /* .container {
+            width: 100%;
+            padding: 1em;
+        } */
+
+        .bold-blue {
+            font-weight: bold;
+            color: #0277BD;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar" style="background-color: #6342f5;">
+        <div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2">
+            <a class="navbar-brand me-auto" href="/" aria-label="Vaccine Notifier">
+                <img src="images/favicon-32x32.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                Vaccine Notifier
+            </a>
+            <ul class="navbar-nav ms-3">
+                <li class="nav-item">
+                    <a class="nav-link" href="https://selfregistration.cowin.gov.in/">CoWIN Registration</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link p-2" href="https://github.com/sujeendran" target="_blank" rel="noopener"
+                        aria-label="GitHub">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                            class="bi bi-github" viewBox="0 0 16 16">
+                            <path
+                                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
+                        </svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+
+    <div class="container" style="width: 100%; padding: 1em;">
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs justify-content-center" id="selectionTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pin-tab" data-bs-toggle="tab" data-bs-target="#bypin" type="button"
+                    role="tab" aria-controls="pin" aria-selected="true">Search by Pincode</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="district-tab" data-bs-toggle="tab" data-bs-target="#bydistrict"
+                    type="button" role="tab" aria-controls="district" aria-selected="false">Search by District</button>
+            </li>
+        </ul>
+
+        <!-- Tab panes -->
+        <div class="tab-content">
+            <!-- SELECTION BY PINCODE TAB -->
+            <div class="tab-pane active" id="bypin" role="tabpanel" aria-labelledby="pin-tab">
+                <br>
+                <form class="row justify-content-center align-items-center h-100">
+                    <div class="col-auto">
+                        <label class="visually-hidden" for="inputPinSelect">Username</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="inputPinSelect" placeholder="Enter your pincode"
+                                aria-label="User's pincode" aria-describedby="setPinBtn">
+                            <button class="btn btn-outline-secondary" type="button" id="setPinBtn">Set Pincode</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <!-- SELECTION BY DISTRIC TAB -->
+            <div class="tab-pane" id="bydistrict" role="tabpanel" aria-labelledby="district-tab">
+                <br>
+                <form class="row justify-content-center align-items-center h-100">
+                    <div class="col-md-4">
+                        <label class="form-label" for="inputStateSelect">State</label>
+                        <select class="form-select" id="inputStateSelect">
+                            <!-- Fill with JS -->
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="inputDistricSelect">District</label>
+                        <select class="form-select" id="inputDistricSelect">
+                            <!-- Fill with JS -->
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+        <div id="toolbar">
+            <button id="refresh" class="btn btn-secondary">refresh</button>
+        </div>
+        <table id="table" data-toggle="table" data-toolbar="#toolbar" data-search="true" data-filter-control="true"
+            data-pagination="true" data-click-to-select="true">
+            <thead>
+                <tr>
+                    <th data-field="Date" data-filter-control="select" data-sortable="true">Date</th>
+                    <th data-field="Name" data-filter-control="input" data-sortable="true">Center Name</th>
+                    <th data-field="Pincode" data-filter-control="input" data-sortable="true">Pincode</th>
+                    <th data-field="Fee" data-filter-control="select" data-sortable="true">Fee Type</th>
+                    <th data-field="Slots" data-sortable="true">Slots</th>
+                    <th data-field="Age" data-filter-control="select" data-sortable="true">Age</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"
+        integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.min.js"
+        integrity="sha384-Atwg2Pkwv9vp0ygtn1JAojH0nYbwNJLPhwyoVbhoPwBhjQPR5VtM2+xf0Uwh9KtT"
+        crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.js"></script>
+    <script
+        src="https://unpkg.com/bootstrap-table@1.18.3/dist/extensions/filter-control/bootstrap-table-filter-control.min.js"></script>
+</body>
+
+<script>
+    var $table = $('#table')
+    var $refreshBtn = $('#refresh')
+    var trBoldBlue = $("table");
+
+    $(trBoldBlue).on("click", "tr", function () {
+        $(this).toggleClass("bold-blue");
+        $(this).siblings().removeClass("bold-blue");
+    });
+
+    $refreshBtn.click(function () {
+        getDummy();
+    })
+
+    window.onload = function () {
+        getDummy();
+        setInterval(getDummy, 10000);
+    }
+
+    async function getDummy() {
+        try {
+            $table.bootstrapTable('showLoading')
+            var slots = new Array();
+            var notifyUser = false;
+            await sleep(1000);
+            var responseObj = JSON.parse('{"centers":[{"center_id":632712,"name":"Sarada Sankara Auditorium","address":"Sarada Sankara Auditorium Vennakara","state_name":"Kerala","district_name":"Palakkad","block_name":"Palakkad Muncipality","pincode":678001,"lat":10,"long":76,"from":"09:00:00","to":"16:00:00","fee_type":"Free","sessions":[{"session_id":"b5794f6f-8bca-49ff-8e6e-55da269e46d6","date":"11-05-2021","available_capacity":3,"min_age_limit":45,"vaccine":"COVISHIELD","slots":["09:00AM-11:00AM","11:00AM-01:00PM","01:00PM-03:00PM","03:00PM-04:00PM"]}]},{"center_id":569478,"name":"Govt Medical College (Covaxin)","address":"EAST YakkaraPalakkad","state_name":"Kerala","district_name":"Palakkad","block_name":"Palakkad Muncipality","pincode":678001,"lat":10,"long":76,"from":"09:00:00","to":"16:00:00","fee_type":"Free","sessions":[{"session_id":"6552163e-b5dd-4068-bc73-2d46fcdf3027","date":"11-05-2021","available_capacity":1,"min_age_limit":45,"vaccine":"COVAXIN","slots":["09:00AM-11:00AM","11:00AM-01:00PM","01:00PM-03:00PM","03:00PM-04:00PM"]}]}]}')
+            // setTimestamp();
+            for (i in responseObj.centers) {
+                for (j in responseObj.centers[i].sessions) {
+                    if (responseObj.centers[i].sessions[j].available_capacity > 0) {
+                        notifyUser = true;
+                    }
+                    slots.push({
+                        'Date': responseObj.centers[i].sessions[j].date,
+                        'Name': responseObj.centers[i].name,
+                        'Pincode': responseObj.centers[i].pincode,
+                        'Fee': responseObj.centers[i].fee_type,
+                        'Slots': ~~(Math.random() * 100),// responseObj.centers[i].sessions[j].available_capacity,
+                        'Age': responseObj.centers[i].sessions[j].min_age_limit + "+"
+                    });
+                }
+            }
+            if (~~(Math.random() * 100) < 20)
+                throw "Fail Parse";
+            updateTable(slots);
+            $table.bootstrapTable('hideLoading')
+        }
+        catch (e) {
+            console.log("Error while loading data: " + e);
+            $table.bootstrapTable('hideLoading')
+            return
+        }
+        // //Notify user here
+        // if (notifyUser == false) {
+        //     responseText.innerHTML = "No free vaccination slots available near you."
+        // }
+        // else {
+        //     responseText.innerHTML = "Vaccination slots are available near you."
+        //     showNotification();
+        // }
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function updateTable(data) {
+        $table.bootstrapTable('removeAll')
+        $table.bootstrapTable('append', data)
+    }
+
+</script>
+
+</html>
