@@ -1,79 +1,267 @@
-<!-- Needs HTTP(S) server to run notifications -->
-<!-- With python easy way is to execute "python -m http.server" and open URL "localhost:8000" in your browser-->
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon">
-    <title>Vaccine Availability Notifier</title>
+    <title>Vaccine Notifier</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
+        integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css"
+        integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.css">
+    <style>
+        .btn-secondary,
+        .btn-secondary:hover,
+        .btn-secondary:active,
+        .btn-secondary:visited {
+            background-color: #6342f5 !important;
+            border-color: #9a83ff !important;
+        }
+
+        .btn-outline-secondary:hover,
+        .btn-outline-secondary:active,
+        .btn-outline-secondary:visited {
+            background-color: #6342f5 !important;
+            border-color: #9a83ff !important;
+        }
+
+        .bold-blue {
+            font-weight: bold;
+            color: #0277BD;
+        }
+    </style>
 </head>
 
 <body>
-    <h2>Vaccine Notifier</h2>
-    <p>Automatically checks for slots every 5 minutes and notifies you when there is a vaccine available near you!</p>
-    <button id="enable">Enable notifications</button>
-    <label for="cpin">Current PINCODE:</label>
-    <input type="number" id="cpin" value=678001 disabled>
-    <br>
-    <label for="npin">New PINCODE:</label>
-    <input type="number" id="npin">
-    <input type="button" onclick="setPincode()" value="Set">
-    <p id="responseText"></p>
-    <div id="dvTable"></div>
-    <p id="timestamp"></p>
-    <br>
-    <p id="queryURL"></p>
+    <!-- Navigation bar -->
+    <nav class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar" style="background-color: #6342f5;">
+        <div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2">
+            <a class="navbar-brand me-auto" href="" aria-label="Vaccine Notifier">
+                <img src="images/favicon-32x32.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                Vaccine Notifier
+            </a>
+            <ul class="navbar-nav ms-3">
+                <li class="nav-item">
+                    <a class="nav-link" href="https://selfregistration.cowin.gov.in/">CoWIN Registration</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link p-2" href="https://github.com/sujeendran/VaccineNotifier" target="_blank"
+                        rel="noopener" aria-label="GitHub">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                            class="bi bi-github" viewBox="0 0 16 16">
+                            <path
+                                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
+                        </svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main container -->
+    <div class="container" style="width: 100%; padding: 1em;">
+
+        <!-- Introduction -->
+        <figure class="text-center">
+            <p class="lead">This page automatically checks for slots every 5 minutes and sends you browser notification
+                when there is a vaccine available near you!</p>
+            <div id="notificationConfig" style="background-color: #e2dcfd; border-radius: 1em; padding: 0.5em">
+                <p><em>To get notifications even when this page is not in view(minimized/using another tab), please
+                        click below button and allow notifications. If you have denied previously please reset this
+                        site's permissions from your browser settings.</em></p>
+                <p style="font-size: small; color: #5c5c5c7f;"><small>Web notification feature is supported only on
+                        Chrome, Edge, Firefox, Opera, Safari on Windows, Linux, MacOS, Android</small></p>
+                <button type="button" class="btn btn-primary" id="notificationBtn">Enable notifications</button>
+            </div>
+        </figure>
+
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs justify-content-center" id="selectionTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pin-tab" data-bs-toggle="tab" data-bs-target="#bypin" type="button"
+                    role="tab" aria-controls="pin" aria-selected="true">Search by Pincode</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="district-tab" data-bs-toggle="tab" data-bs-target="#bydistrict"
+                    type="button" role="tab" aria-controls="district" aria-selected="false">Search by District</button>
+            </li>
+        </ul>
+
+        <!-- Tab panes -->
+        <div class="tab-content">
+            <!-- SELECTION BY PINCODE TAB -->
+            <div class="tab-pane active" id="bypin" role="tabpanel" aria-labelledby="pin-tab">
+                <br>
+                <form class="row justify-content-center align-items-center w-100">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="number" min="100001" max="999999" class="form-control" id="inputPinSelect"
+                                placeholder="Enter your pincode" aria-label="User's pincode"
+                                aria-describedby="searchPinBtn">
+                            <button class="btn btn-outline-secondary" type="button" id="searchPinBtn"
+                                onclick="setPincode()">Set Pincode</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <!-- SELECTION BY DISTRIC TAB -->
+            <div class="tab-pane" id="bydistrict" role="tabpanel" aria-labelledby="district-tab">
+                <br>
+                <form class="row justify-content-center align-items-center w-100">
+                    <div class="col-md-4">
+                        <label class="form-label" for="inputStateSelect">State</label>
+                        <select class="form-select" id="inputStateSelect" onchange="getDistricts(this.value)">
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="inputDistrictSelect">District</label>
+                        <select class="form-select" id="inputDistrictSelect">
+                        </select>
+                    </div>
+                    <div class="col-md-3" style="padding-top: 2em;">
+                        <button class="btn btn-outline-secondary" type="button" id="searchDisBtn"
+                            onclick="setDistrict()">Set Location</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <hr>
+        <!-- Alerts -->
+        <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+            <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
+                <path
+                    d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+            </symbol>
+            <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+                <path
+                    d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+            </symbol>
+        </svg>
+        <span id="alertSuccess" class="badge rounded-pill bg-success" style="display: none;">
+            <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Success:">
+                <use xlink:href="#check-circle-fill" />
+            </svg>
+            Vaccination slots are available for booking
+        </span>
+        <span id="alertFail" class="badge rounded-pill bg-danger" style="display: none;">
+            <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Danger:">
+                <use xlink:href="#exclamation-triangle-fill" />
+            </svg>
+            No vaccination slots available for booking
+        </span>
+
+        <!-- Table -->
+        <div id="toolbar">
+            <button id="refresh" class="btn btn-secondary">refresh</button>
+        </div>
+        <table id="table" data-toggle="table" data-toolbar="#toolbar" data-search="true" data-filter-control="true"
+            data-pagination="true" data-click-to-select="true" data-sort-name="Slots" data-sort-order="desc">
+            <thead>
+                <tr>
+                    <th data-field="Date" data-filter-control="select" data-sortable="true">Date</th>
+                    <th data-field="Name" data-filter-control="input" data-sortable="true">Center Name</th>
+                    <th data-field="Address" data-filter-control="input" data-sortable="true">Address</th>
+                    <th data-field="Fee" data-filter-control="select" data-sortable="true">Fee Type</th>
+                    <th data-field="Slots" data-sortable="true">Slots</th>
+                    <th data-field="Age" data-filter-control="select" data-sortable="true">Age</th>
+                </tr>
+            </thead>
+        </table>
+        <p><small id='timestamp'></small></p>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-3">
+        <div class="container text-center">
+            <p style="font-size: small; color: #5c5c5c7f;">
+                <small>
+                    Developed by 
+                    <a href="https://www.linkedin.com/in/sujeendran-menon">
+                        Sujeendran Menon
+                    </a>
+                     with HTML5 and Bootstrap5
+                </small>
+            </p>
+        </div>
+    </footer>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"
+        integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.min.js"
+        integrity="sha384-Atwg2Pkwv9vp0ygtn1JAojH0nYbwNJLPhwyoVbhoPwBhjQPR5VtM2+xf0Uwh9KtT"
+        crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.js"></script>
+    <script src="https://unpkg.com/bootstrap-table@1.18.3/dist/extensions/filter-control/bootstrap-table-filter-control.min.js"></script>
 </body>
+
 <script>
-    const notificationBtn = document.getElementById('enable');
-    const currentPin = document.getElementById('cpin');
-    const newPin = document.getElementById('npin');
-    const responseText = document.getElementById('responseText');
-    const queryText = document.getElementById('queryURL');
+    var $table = $('#table')
+    var $refreshBtn = $('#refresh')
+    var trBoldBlue = $("table");
+
+    var query = "";
+    const stateSelect = document.getElementById('inputStateSelect');
+    const districtSelect = document.getElementById('inputDistrictSelect');
+    const pinSelect = document.getElementById('inputPinSelect');
     const timestamp = document.getElementById('timestamp');
+    const alertSuccess = document.getElementById("alertSuccess");
+    const alertFail = document.getElementById("alertFail");
+    const notificationBtn = document.getElementById('notificationBtn');
+    const notificationSection = document.getElementById('notificationConfig');
 
     // Do an initial check to see what the notification permission state is
     if (Notification.permission === 'denied' || Notification.permission === 'default') {
-        notificationBtn.style.display = 'block';
+        notificationSection.style.display = 'block';
     } else {
-        notificationBtn.style.display = 'none';
+        notificationSection.style.display = 'none';
     }
+
+    $(trBoldBlue).on("click", "tr", function () {
+        $(this).toggleClass("bold-blue");
+        $(this).siblings().removeClass("bold-blue");
+    });
+
+    $refreshBtn.click(function () {
+        getAvailability();
+    })
 
     window.onload = function () {
         // Setup service worker to send notifications
         navigator.serviceWorker.register('/sw.js');
-
-        // wire up notification permission functionality to "Enable notifications" button
+        // Wire up notification permission functionality to "Enable notifications" button
         notificationBtn.addEventListener('click', askNotificationPermission);
-
-        //Run once and then setup 5-min interval based checker
-        getAvailabilityByPin();
-        var vaccineChecker = setInterval(getAvailabilityByPin, 300000);
-
-        //Dummy check
-        // getDummy();
-        // var vaccineChecker = setInterval(getDummy, 300000);
+        // Fill up states entries
+        getStates();
+        // Check for availability
+        getAvailability();
+        setInterval(getAvailability, 300000);
     }
 
     function askNotificationPermission() {
-        // function to actually ask the permissions
         function handlePermission(permission) {
-            // Whatever the user answers, we make sure Chrome stores the information
+            // Stores user selection information
             if (!('permission' in Notification)) {
                 Notification.permission = permission;
             }
 
-            // set the button to shown or hidden, depending on what the user answers
+            // Set button visibility, depending on user input
             if (Notification.permission === 'denied' || Notification.permission === 'default') {
-                notificationBtn.style.display = 'block';
+                notificationSection.style.display = 'block';
             } else {
-                notificationBtn.style.display = 'none';
+                notificationSection.style.display = 'none';
             }
         }
 
-        // Let's check if the browser supports notifications
         if (!"Notification" in window) {
-            console.log("This browser does not support notifications.");
+            alert("This browser does not support notifications.");
         } else {
             if (checkNotificationPromise()) {
                 Notification.requestPermission()
@@ -100,15 +288,16 @@
         return true;
     }
 
-    function showNotification() {
-        if (document.visibilityState === "visible" || Notification.permission !== 'granted') {
-            alert("Vaccine is available at your nearest centers now.");
+    async function showNotification() {
+        if (Notification.permission !== 'granted') {
+            if (document.visibilityState !== "visible") {
+                alert("Vaccination slots are available for booking in centers near you");
+            }
             return;
         }
-
-        let titleTag = "Vaccine Notification";
+        let titleTag = "Vaccine Notifier";
         let img = "images/favicon.png";
-        let message = "Vaccine is available at your nearest centers now.";
+        let message = "Vaccination slots are available for booking in centers near you";
         navigator.serviceWorker.ready.then(function (registration) {
             registration.showNotification(titleTag, { body: message, icon: img });
         });
@@ -118,102 +307,137 @@
         // });
     }
 
-    function checkTime() {
-        var d = new Date();
-        var t = d.toLocaleTimeString();
-        document.getElementById("responseText").innerHTML = t;
-    }
-
-    function getDummy() {
-        var responseObj = JSON.parse('{"centers":[{"center_id":632712,"name":"Sarada Sankara Auditorium","address":"Sarada Sankara Auditorium Vennakara","state_name":"Kerala","district_name":"Palakkad","block_name":"Palakkad Muncipality","pincode":678001,"lat":10,"long":76,"from":"09:00:00","to":"16:00:00","fee_type":"Free","sessions":[{"session_id":"b5794f6f-8bca-49ff-8e6e-55da269e46d6","date":"11-05-2021","available_capacity":3,"min_age_limit":45,"vaccine":"COVISHIELD","slots":["09:00AM-11:00AM","11:00AM-01:00PM","01:00PM-03:00PM","03:00PM-04:00PM"]}]},{"center_id":569478,"name":"Govt Medical College (Covaxin)","address":"EAST YakkaraPalakkad","state_name":"Kerala","district_name":"Palakkad","block_name":"Palakkad Muncipality","pincode":678001,"lat":10,"long":76,"from":"09:00:00","to":"16:00:00","fee_type":"Free","sessions":[{"session_id":"6552163e-b5dd-4068-bc73-2d46fcdf3027","date":"11-05-2021","available_capacity":1,"min_age_limit":45,"vaccine":"COVAXIN","slots":["09:00AM-11:00AM","11:00AM-01:00PM","01:00PM-03:00PM","03:00PM-04:00PM"]}]}]}')
-        setTimestamp();
-        var slots = new Array();
-        var notifyUser = false;
-        for (i in responseObj.centers) {
-            for (j in responseObj.centers[i].sessions) {
-                if (responseObj.centers[i].sessions[j].available_capacity > 0) {
-                    notifyUser = true;
-                }
-                slots.push({
-                    'Date': responseObj.centers[i].sessions[j].date,
-                    'Name': responseObj.centers[i].name,
-                    'Slots': responseObj.centers[i].sessions[j].available_capacity,
-                    'Age': responseObj.centers[i].sessions[j].min_age_limit + "+"
-                });
-            }
-        }
-        createTable(slots);
-        //Notify user here
-        if (notifyUser == false) {
-            responseText.innerHTML = "No free vaccination slots available near you."
-        }
-        else {
-            responseText.innerHTML = "Vaccination slots are available near you."
-            showNotification();
-        }
-    }
-
-    function getAvailabilityByPin() {
+    async function getStates() {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState == 4 && this.status == 200) {
-                setTimestamp();
+                removeAllOptions(stateSelect);
+                stateSelect.add(new Option("", ""), undefined);
                 var responseObj = JSON.parse(this.responseText);
-                var slots = new Array();
-                var notifyUser = false;
-                for (i in responseObj.centers) {
-                    for (j in responseObj.centers[i].sessions) {
-                        if (responseObj.centers[i].sessions[j].available_capacity > 0) {
-                            notifyUser = true;
-                        }
-                        slots.push({
-                            'Date': responseObj.centers[i].sessions[j].date,
-                            'Name': responseObj.centers[i].name,
-                            'Slots': responseObj.centers[i].sessions[j].available_capacity,
-                            'Age': responseObj.centers[i].sessions[j].min_age_limit + "+"
-                        });
-                    }
-                }
-                createTable(slots);
-                //Notify user here
-                if (notifyUser == false) {
-                    responseText.innerHTML = "No free vaccination slots available near you."
-                }
-                else {
-                    responseText.innerHTML = "Vaccination slots are available near you."
-                    showNotification();
+                for (i in responseObj.states) {
+                    let newOption = new Option(responseObj.states[i].state_name, responseObj.states[i].state_id);
+                    stateSelect.add(newOption, undefined);
                 }
             }
         };
-        xhttp.open("GET", getQuery(), true);
+        xhttp.open("GET", "https://cdn-api.co-vin.in/api/v2/admin/location/states", true);
         xhttp.send();
     }
 
-    function createTable(data) {
-        if (data.length == 0) {
+    async function getDistricts(state_id) {
+        if (state_id === "") {
+            removeAllOptions(districtSelect);
             return;
         }
-        var table = document.createElement("TABLE");
-        table.border = "1";
-        var row = table.insertRow(-1);
-        //Header Row
-        column_names = Object.keys(data[0]);
-        for (i in column_names) {
-            var headerCell = document.createElement("TH");
-            headerCell.innerHTML = column_names[i];
-            row.appendChild(headerCell);
-        }
-        //Data Rows
-        for (var i = 0; i < data.length; i++) {
-            row = table.insertRow(-1);
-            for (var j in column_names) {
-                var cell = row.insertCell(-1);
-                cell.innerHTML = data[i][column_names[j]];
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                removeAllOptions(districtSelect);
+                districtSelect.add(new Option("", ""), undefined);
+                var responseObj = JSON.parse(this.responseText);
+                for (i in responseObj.districts) {
+                    let newOption = new Option(responseObj.districts[i].district_name, responseObj.districts[i].district_id);
+                    districtSelect.add(newOption, undefined);
+                }
             }
+        };
+        xhttp.open("GET", "https://cdn-api.co-vin.in/api/v2/admin/location/districts/" + state_id, true);
+        xhttp.send();
+    }
+
+    async function getDummy() {
+        try {
+            var slots = new Array();
+            var notifyUser = false;
+            await sleep(1000);
+            var responseObj = JSON.parse('{"centers":[{"center_id":632712,"name":"Sarada Sankara Auditorium","address":"Sarada Sankara Auditorium Vennakara","state_name":"Kerala","district_name":"Palakkad","block_name":"Palakkad Muncipality","pincode":678001,"lat":10,"long":76,"from":"09:00:00","to":"16:00:00","fee_type":"Free","sessions":[{"session_id":"b5794f6f-8bca-49ff-8e6e-55da269e46d6","date":"11-05-2021","available_capacity":3,"min_age_limit":45,"vaccine":"COVISHIELD","slots":["09:00AM-11:00AM","11:00AM-01:00PM","01:00PM-03:00PM","03:00PM-04:00PM"]}]},{"center_id":569478,"name":"Govt Medical College (Covaxin)","address":"EAST YakkaraPalakkad","state_name":"Kerala","district_name":"Palakkad","block_name":"Palakkad Muncipality","pincode":678001,"lat":10,"long":76,"from":"09:00:00","to":"16:00:00","fee_type":"Free","sessions":[{"session_id":"6552163e-b5dd-4068-bc73-2d46fcdf3027","date":"11-05-2021","available_capacity":1,"min_age_limit":45,"vaccine":"COVAXIN","slots":["09:00AM-11:00AM","11:00AM-01:00PM","01:00PM-03:00PM","03:00PM-04:00PM"]}]}]}')
+            for (i in responseObj.centers) {
+                for (j in responseObj.centers[i].sessions) {
+                    if (responseObj.centers[i].sessions[j].available_capacity > 0) {
+                        notifyUser = true;
+                    }
+                    slots.push({
+                        'Date': responseObj.centers[i].sessions[j].date,
+                        'Name': responseObj.centers[i].name,
+                        'Address': responseObj.centers[i].address + " - " + responseObj.centers[i].pincode,
+                        'Fee': responseObj.centers[i].fee_type,
+                        'Slots': responseObj.centers[i].sessions[j].available_capacity,
+                        'Age': responseObj.centers[i].sessions[j].min_age_limit + "+"
+                    });
+                }
+            }
+            if (~~(Math.random() * 100) < 20)
+                throw "Fail Parse";
+            setTimestamp();
+            setAlerts(notifyUser);
+            updateTable(slots);
+            if (notifyUser == true)
+                showNotification();
         }
-        var dvTable = document.getElementById("dvTable");
-        dvTable.innerHTML = "";
-        dvTable.appendChild(table);
+        catch (e) {
+            console.log("Error while loading data: " + e);
+            return
+        }
+    }
+
+    async function getAvailability() {
+        try {
+            if (query === "")
+                return;
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    var responseObj = JSON.parse(this.responseText);
+                    var slots = new Array();
+                    var notifyUser = false;
+                    for (i in responseObj.centers) {
+                        for (j in responseObj.centers[i].sessions) {
+                            if (responseObj.centers[i].sessions[j].available_capacity > 0) {
+                                notifyUser = true;
+                            }
+                            slots.push({
+                                'Date': responseObj.centers[i].sessions[j].date,
+                                'Name': responseObj.centers[i].name,
+                                'Address': responseObj.centers[i].address + " - " + responseObj.centers[i].pincode,
+                                'Fee': responseObj.centers[i].fee_type,
+                                'Slots': responseObj.centers[i].sessions[j].available_capacity,
+                                'Age': responseObj.centers[i].sessions[j].min_age_limit + "+"
+                            });
+                        }
+                    }
+                    setTimestamp();
+                    setAlerts(notifyUser);
+                    updateTable(slots);
+                    if (notifyUser == true)
+                        showNotification();
+                }
+            };
+            console.log("GET: " + query);
+            xhttp.open("GET", query, true);
+            xhttp.send();
+        }
+        catch (e) {
+            console.log("Error while retrieving data: " + e);
+            return
+        }
+    }
+
+    async function setPincode() {
+        if (pinSelect.value < 100001 || pinSelect.value > 999999) {
+            alert("Enter 6 digit pincode");
+            return;
+        }
+        query = "https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode=" + pinSelect.value + "&date=" + getDate();
+        getAvailability();
+    }
+
+    async function setDistrict() {
+        if (districtSelect.value === "") {
+            alert("Select valid state and district");
+            return;
+        }
+        query = "https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByDistrict?district_id=" + districtSelect.value + "&date=" + getDate();
+        getAvailability();
     }
 
     function getDate() {
@@ -225,10 +449,9 @@
         return formatDate;
     }
 
-    function getQuery() {
-        var query = "https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode=" + currentPin.value + "&date=" + getDate();
-        queryText.innerHTML = "API CALL: " + query;
-        return query;
+    function setAlerts(available) {
+        alertSuccess.style.display = (available == true) ? "block" : "none";
+        alertFail.style.display = (available == false) ? "block" : "none";
     }
 
     function setTimestamp() {
@@ -236,13 +459,21 @@
         timestamp.innerHTML = "Last successful check was at " + currentTime.toLocaleString();
     }
 
-    function setPincode() {
-        if (newPin.value < 100000) {
-            alert("Enter valid pincode");
-            return;
+    function removeAllOptions(selectBox) {
+        while (selectBox.options.length > 0) {
+            selectBox.remove(0);
         }
-        currentPin.value = newPin.value;
-        getAvailabilityByPin();
     }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function updateTable(data) {
+        $table.bootstrapTable('removeAll')
+        $table.bootstrapTable('append', data)
+    }
+
 </script>
+
 </html>

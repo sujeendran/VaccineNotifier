@@ -1,0 +1,242 @@
+<!-- Needs HTTP(S) server to run notifications -->
+<!-- With python easy way is to execute "python -m http.server" and open URL "localhost:8000" in your browser-->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon">
+    <title>Vaccine Availability Notifier</title>
+</head>
+
+<body>
+    <h2>Vaccine Notifier</h2>
+    <p>Automatically checks for slots every 5 minutes and notifies you when there is a vaccine available near you!</p>
+    <button id="enable">Enable notifications</button>
+    <label for="cpin">Current PINCODE:</label>
+    <input type="number" id="cpin" value=678001 disabled>
+    <br>
+    <label for="npin">New PINCODE:</label>
+    <input type="number" id="npin">
+    <input type="button" onclick="setPincode()" value="Set">
+    <p id="responseText"></p>
+    <div id="dvTable"></div>
+    <p id="timestamp"></p>
+    <br>
+    <p id="queryURL"></p>
+</body>
+<script>
+    const notificationBtn = document.getElementById('enable');
+    const currentPin = document.getElementById('cpin');
+    const newPin = document.getElementById('npin');
+    const responseText = document.getElementById('responseText');
+    const queryText = document.getElementById('queryURL');
+    const timestamp = document.getElementById('timestamp');
+
+    // Do an initial check to see what the notification permission state is
+    if (Notification.permission === 'denied' || Notification.permission === 'default') {
+        notificationBtn.style.display = 'block';
+    } else {
+        notificationBtn.style.display = 'none';
+    }
+
+    window.onload = function () {
+        // Setup service worker to send notifications
+        navigator.serviceWorker.register('/sw.js');
+
+        // wire up notification permission functionality to "Enable notifications" button
+        notificationBtn.addEventListener('click', askNotificationPermission);
+
+        //Run once and then setup 5-min interval based checker
+        getAvailabilityByPin();
+        var vaccineChecker = setInterval(getAvailabilityByPin, 300000);
+
+        //Dummy check
+        // getDummy();
+        // var vaccineChecker = setInterval(getDummy, 300000);
+    }
+
+    function askNotificationPermission() {
+        // function to actually ask the permissions
+        function handlePermission(permission) {
+            // Whatever the user answers, we make sure Chrome stores the information
+            if (!('permission' in Notification)) {
+                Notification.permission = permission;
+            }
+
+            // set the button to shown or hidden, depending on what the user answers
+            if (Notification.permission === 'denied' || Notification.permission === 'default') {
+                notificationBtn.style.display = 'block';
+            } else {
+                notificationBtn.style.display = 'none';
+            }
+        }
+
+        // Let's check if the browser supports notifications
+        if (!"Notification" in window) {
+            console.log("This browser does not support notifications.");
+        } else {
+            if (checkNotificationPromise()) {
+                Notification.requestPermission()
+                    .then((permission) => {
+                        handlePermission(permission);
+                    })
+            } else {
+                Notification.requestPermission(function (permission) {
+                    handlePermission(permission);
+                });
+            }
+        }
+    }
+
+    // Function to check whether browser supports the promise version of requestPermission()
+    // Safari only supports the old callback-based version
+    function checkNotificationPromise() {
+        try {
+            Notification.requestPermission().then();
+        }
+        catch (e) {
+            return false;
+        }
+        return true;
+    }
+
+    function showNotification() {
+        if (document.visibilityState === "visible" || Notification.permission !== 'granted') {
+            alert("Vaccine is available at your nearest centers now.");
+            return;
+        }
+
+        let titleTag = "Vaccine Notification";
+        let img = "images/favicon.png";
+        let message = "Vaccine is available at your nearest centers now.";
+        navigator.serviceWorker.ready.then(function (registration) {
+            registration.showNotification(titleTag, { body: message, icon: img });
+        });
+        // Replace with below line if you want notification to group together
+        // navigator.serviceWorker.ready.then(function (registration) {
+        //     registration.showNotification(titleTag, { body: message, icon: img, tag: titleTag });
+        // });
+    }
+
+    function getDummy() {
+        var responseObj = JSON.parse('{"centers":[{"center_id":632712,"name":"Sarada Sankara Auditorium","address":"Sarada Sankara Auditorium Vennakara","state_name":"Kerala","district_name":"Palakkad","block_name":"Palakkad Muncipality","pincode":678001,"lat":10,"long":76,"from":"09:00:00","to":"16:00:00","fee_type":"Free","sessions":[{"session_id":"b5794f6f-8bca-49ff-8e6e-55da269e46d6","date":"11-05-2021","available_capacity":3,"min_age_limit":45,"vaccine":"COVISHIELD","slots":["09:00AM-11:00AM","11:00AM-01:00PM","01:00PM-03:00PM","03:00PM-04:00PM"]}]},{"center_id":569478,"name":"Govt Medical College (Covaxin)","address":"EAST YakkaraPalakkad","state_name":"Kerala","district_name":"Palakkad","block_name":"Palakkad Muncipality","pincode":678001,"lat":10,"long":76,"from":"09:00:00","to":"16:00:00","fee_type":"Free","sessions":[{"session_id":"6552163e-b5dd-4068-bc73-2d46fcdf3027","date":"11-05-2021","available_capacity":1,"min_age_limit":45,"vaccine":"COVAXIN","slots":["09:00AM-11:00AM","11:00AM-01:00PM","01:00PM-03:00PM","03:00PM-04:00PM"]}]}]}')
+        setTimestamp();
+        var slots = new Array();
+        var notifyUser = false;
+        for (i in responseObj.centers) {
+            for (j in responseObj.centers[i].sessions) {
+                if (responseObj.centers[i].sessions[j].available_capacity > 0) {
+                    notifyUser = true;
+                }
+                slots.push({
+                    'Date': responseObj.centers[i].sessions[j].date,
+                    'Name': responseObj.centers[i].name,
+                    'Slots': responseObj.centers[i].sessions[j].available_capacity,
+                    'Age': responseObj.centers[i].sessions[j].min_age_limit + "+"
+                });
+            }
+        }
+        createTable(slots);
+        //Notify user here
+        if (notifyUser == false) {
+            responseText.innerHTML = "No free vaccination slots available near you."
+        }
+        else {
+            responseText.innerHTML = "Vaccination slots are available near you."
+            showNotification();
+        }
+    }
+
+    function getAvailabilityByPin() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                setTimestamp();
+                var responseObj = JSON.parse(this.responseText);
+                var slots = new Array();
+                var notifyUser = false;
+                for (i in responseObj.centers) {
+                    for (j in responseObj.centers[i].sessions) {
+                        if (responseObj.centers[i].sessions[j].available_capacity > 0) {
+                            notifyUser = true;
+                        }
+                        slots.push({
+                            'Date': responseObj.centers[i].sessions[j].date,
+                            'Name': responseObj.centers[i].name,
+                            'Slots': responseObj.centers[i].sessions[j].available_capacity,
+                            'Age': responseObj.centers[i].sessions[j].min_age_limit + "+"
+                        });
+                    }
+                }
+                createTable(slots);
+                //Notify user here
+                if (notifyUser == false) {
+                    responseText.innerHTML = "No free vaccination slots available near you."
+                }
+                else {
+                    responseText.innerHTML = "Vaccination slots are available near you."
+                    showNotification();
+                }
+            }
+        };
+        xhttp.open("GET", getQuery(), true);
+        xhttp.send();
+    }
+
+    function createTable(data) {
+        if (data.length == 0) {
+            return;
+        }
+        var table = document.createElement("TABLE");
+        table.border = "1";
+        var row = table.insertRow(-1);
+        //Header Row
+        column_names = Object.keys(data[0]);
+        for (i in column_names) {
+            var headerCell = document.createElement("TH");
+            headerCell.innerHTML = column_names[i];
+            row.appendChild(headerCell);
+        }
+        //Data Rows
+        for (var i = 0; i < data.length; i++) {
+            row = table.insertRow(-1);
+            for (var j in column_names) {
+                var cell = row.insertCell(-1);
+                cell.innerHTML = data[i][column_names[j]];
+            }
+        }
+        var dvTable = document.getElementById("dvTable");
+        dvTable.innerHTML = "";
+        dvTable.appendChild(table);
+    }
+
+    function getDate() {
+        const currentDate = new Date();
+        const currentDayOfMonth = currentDate.getDate();
+        const currentMonth = currentDate.getMonth(); // Be careful! January is 0, not 1
+        const currentYear = currentDate.getFullYear();
+        var formatDate = currentDayOfMonth + "-" + (currentMonth + 1) + "-" + currentYear;
+        return formatDate;
+    }
+
+    function getQuery() {
+        var query = "https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode=" + currentPin.value + "&date=" + getDate();
+        queryText.innerHTML = "API CALL: " + query;
+        return query;
+    }
+
+    function setTimestamp() {
+        const currentTime = new Date();
+        timestamp.innerHTML = "Last successful check was at " + currentTime.toLocaleString();
+    }
+
+    function setPincode() {
+        if (newPin.value < 100000) {
+            alert("Enter valid pincode");
+            return;
+        }
+        currentPin.value = newPin.value;
+        getAvailabilityByPin();
+    }
+</script>
+</html>
