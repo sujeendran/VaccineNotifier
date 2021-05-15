@@ -289,10 +289,13 @@
     }
 
     async function showNotification() {
+        // If webpage is open and in view dont send notification
+        if (document.visibilityState === "visible") {
+            return;
+        }
+        // If notification permission is not granted, send alert
         if (Notification.permission !== 'granted') {
-            if (document.visibilityState !== "visible") {
-                alert("Vaccination slots are available for booking in centers near you");
-            }
+            alert("Vaccination slots are available for booking in centers near you");
             return;
         }
         let titleTag = "Vaccine Notifier";
