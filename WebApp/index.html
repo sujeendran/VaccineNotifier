@@ -231,12 +231,19 @@
     const notificationBtn = document.getElementById('notificationBtn');
     const notificationSection = document.getElementById('notificationConfig');
 
-    // Do an initial check to see what the notification permission state is
-    if (Notification.permission === 'denied' || Notification.permission === 'default') {
-        notificationSection.style.display = 'block';
-    } else {
-        notificationSection.style.display = 'none';
+    try {
+        // Do an initial check to see what the notification permission state is
+        if (Notification.permission === 'denied' || Notification.permission === 'default') {
+            notificationSection.style.display = 'block';
+        } else {
+            notificationSection.style.display = 'none';
+        }
     }
+    catch(e)
+    {
+        console.log("Browser does not support Notifications");
+    }
+    
 
     $(trBoldBlue).on("click", "tr", function () {
         $(this).toggleClass("bold-blue");
@@ -248,8 +255,13 @@
     })
 
     window.onload = function () {
-        // Setup service worker to send notifications
-        navigator.serviceWorker.register('/sw.js');
+        // Setup service worker to send notifications if available
+        try {
+            navigator.serviceWorker.register('/sw.js');
+        }
+        catch(e) {
+            console.log("Browser does not support ServiceWorkerAPI");
+        }
         // Wire up notification permission functionality to "Enable notifications" button
         notificationBtn.addEventListener('click', askNotificationPermission);
         // Fill up states entries
