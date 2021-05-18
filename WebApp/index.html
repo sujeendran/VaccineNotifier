@@ -83,6 +83,7 @@
         <figure class="text-center">
             <p class="lead">This page automatically checks for slots every 5 minutes and sends you browser notification
                 when there is a vaccine available near you!</p>
+            <p class="strong">For best notification experience open this page in your desktop or laptop</p>
             <div id="notificationConfig" style="background-color: #e2dcfd; border-radius: 1em; padding: 0.5em">
                 <p><em>To get notifications even when this page is not in view(minimized/using another tab), please
                         click below button and allow notifications. If you have denied previously please reset this
@@ -241,7 +242,7 @@
     }
     catch(e)
     {
-        console.log("Browser does not support Notifications");
+        console.log("Notifications API: " + e);
     }
     
 
@@ -260,7 +261,7 @@
             navigator.serviceWorker.register('/sw.js');
         }
         catch(e) {
-            console.log("Browser does not support ServiceWorkerAPI");
+            console.log("ServiceWorkerAPI registration: " + e);
         }
         // Wire up notification permission functionality to "Enable notifications" button
         notificationBtn.addEventListener('click', askNotificationPermission);
@@ -273,16 +274,21 @@
 
     function askNotificationPermission() {
         function handlePermission(permission) {
-            // Stores user selection information
-            if (!('permission' in Notification)) {
-                Notification.permission = permission;
-            }
+            try {
+                // Stores user selection information
+                if (!('permission' in Notification)) {
+                    Notification.permission = permission;
+                }
 
-            // Set button visibility, depending on user input
-            if (Notification.permission === 'denied' || Notification.permission === 'default') {
-                notificationSection.style.display = 'block';
-            } else {
-                notificationSection.style.display = 'none';
+                // Set button visibility, depending on user input
+                if (Notification.permission === 'denied' || Notification.permission === 'default') {
+                    notificationSection.style.display = 'block';
+                } else {
+                    notificationSection.style.display = 'none';
+                }
+            }
+            catch(e) {
+                console.log('HandlePermission Exception: ' + e);
             }
         }
 
@@ -315,25 +321,32 @@
     }
 
     async function showNotification() {
-        // If webpage is open and in view dont send notification
-        if (document.visibilityState === "visible") {
-            return;
+        try {
+            // If webpage is open and in view dont send notification
+            if (document.visibilityState === "visible") {
+                return;
+            }
+            // If notification permission is not granted, send alert
+            if (Notification.permission !== 'granted') {
+                alert("Vaccination slots are available for booking in centers near you");
+                return;
+            }
+            let titleTag = "Vaccine Notifier";
+            let img = "images/favicon.png";
+            let message = "Vaccination slots are available for booking in centers near you";
+            navigator.serviceWorker.ready.then(function (registration) {
+                registration.showNotification(titleTag, { body: message, icon: img });
+            });
+            // Replace with below line if you want notification to group together
+            // navigator.serviceWorker.ready.then(function (registration) {
+            //     registration.showNotification(titleTag, { body: message, icon: img, tag: titleTag });
+            // });
         }
-        // If notification permission is not granted, send alert
-        if (Notification.permission !== 'granted') {
+        catch(e) {
             alert("Vaccination slots are available for booking in centers near you");
+            console.log("Show notification exception: " + e);
             return;
         }
-        let titleTag = "Vaccine Notifier";
-        let img = "images/favicon.png";
-        let message = "Vaccination slots are available for booking in centers near you";
-        navigator.serviceWorker.ready.then(function (registration) {
-            registration.showNotification(titleTag, { body: message, icon: img });
-        });
-        // Replace with below line if you want notification to group together
-        // navigator.serviceWorker.ready.then(function (registration) {
-        //     registration.showNotification(titleTag, { body: message, icon: img, tag: titleTag });
-        // });
     }
 
     async function getStates() {
