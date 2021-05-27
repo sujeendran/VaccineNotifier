@@ -21,4 +21,4 @@ To fork and experiment locally, keep in mind that browser notifications work on 
 
 Python script that can be run as a windows scheduled task that checks for available vaccine slots and sends you SMS using Twilio API.
 
-Will publish as soon as I clean up the code a bit.
+Refer to README.md in PythonSMSNotifier folder for more details.
