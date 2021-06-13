@@ -22,6 +22,11 @@
             border-color: #9a83ff !important;
         }
 
+        .btn-outline-primary:hover {
+            background-color: #6342f5 !important;
+            border-color: #9a83ff !important;
+        }
+
         .btn-outline-secondary:hover,
         .btn-outline-secondary:active,
         .btn-outline-secondary:visited {
@@ -146,6 +151,36 @@
         </div>
 
         <hr>
+        <!-- Preferences -->
+        <p>
+        <button class="btn btn-secondary justify-content-center align-items-center w-100" type="button" data-bs-toggle="collapse" data-bs-target="#prefCollapse">
+            Advanced Preferences
+        </button>
+        </p>
+        <div class="container collapse" id="prefCollapse">
+            <div class="row justify-content-center align-items-center w-100 btn-toolbar" role="toolbar">
+                <div class="col btn-group me-2" style="padding-top: 0.5em;" role="group">
+                    <input type="radio" class="btn-check" name="ageRadio" id="ageAny" value="" autocomplete="off" checked>
+                    <label class="btn btn-outline-primary" for="ageAny">Any</label>
+                    <input type="radio" class="btn-check" name="ageRadio" id="age18" value=18 autocomplete="off">
+                    <label class="btn btn-outline-primary" for="age18">18+</label>
+                    <input type="radio" class="btn-check" name="ageRadio" id="age40" value=40 autocomplete="off">
+                    <label class="btn btn-outline-primary" for="age40">40+</label>
+                    <input type="radio" class="btn-check" name="ageRadio" id="age45" value=45 autocomplete="off">
+                    <label class="btn btn-outline-primary" for="age45">45+</label>
+                </div>
+                <div class="col btn-group me-2" style="padding-top: 0.5em;" role="group">
+                    <input type="radio" class="btn-check" name="vaccineRadio" id="vaccineAny" value="" autocomplete="off" checked>
+                    <label class="btn btn-outline-primary" for="vaccineAny">Any</label>
+                    <input type="radio" class="btn-check" name="vaccineRadio" id="vaccineCX" value="COVAXIN" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="vaccineCX">COVAXIN</label>
+                    <input type="radio" class="btn-check" name="vaccineRadio" id="vaccineCS" value="COVISHIELD" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="vaccineCS">COVISHIELD</label>
+                </div>
+            </div>
+        </div>
+
+        <hr>
         <!-- Alerts -->
         <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
             <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
@@ -184,6 +219,7 @@
                     <th data-field="Fee" data-filter-control="select" data-sortable="true">Fee Type</th>
                     <th data-field="Slots" data-sortable="true">Slots</th>
                     <th data-field="Age" data-filter-control="select" data-sortable="true">Age</th>
+                    <th data-field="Vaccine" data-filter-control="select" data-sortable="true">Vaccine</th>
                 </tr>
             </thead>
         </table>
@@ -220,7 +256,7 @@
 <script>
     var $table = $('#table')
     var $refreshBtn = $('#refresh')
-    var trBoldBlue = $("table");
+    var $trBoldBlue = $("table");
 
     var query = "";
     const stateSelect = document.getElementById('inputStateSelect');
@@ -246,7 +282,7 @@
     }
     
 
-    $(trBoldBlue).on("click", "tr", function () {
+    $trBoldBlue.on("click", "tr", function () {
         $(this).toggleClass("bold-blue");
         $(this).siblings().removeClass("bold-blue");
     });
@@ -396,7 +432,11 @@
             for (i in responseObj.centers) {
                 for (j in responseObj.centers[i].sessions) {
                     if (responseObj.centers[i].sessions[j].available_capacity > 0) {
-                        notifyUser = true;
+                        var userAgePref = $('input[name=ageRadio]:checked').val();
+                        var userVaccinePref = $('input[name=vaccineRadio]:checked').val();
+                        if ((responseObj.centers[i].sessions[j].min_age_limit == userAgePref || userAgePref == "") && (responseObj.centers[i].sessions[j].vaccine === userVaccinePref || userVaccinePref === "")) {
+                            notifyUser = true;
+                        }
                     }
                     slots.push({
                         'Date': responseObj.centers[i].sessions[j].date,
@@ -404,7 +444,8 @@
                         'Address': responseObj.centers[i].address + " - " + responseObj.centers[i].pincode,
                         'Fee': responseObj.centers[i].fee_type,
                         'Slots': responseObj.centers[i].sessions[j].available_capacity,
-                        'Age': responseObj.centers[i].sessions[j].min_age_limit + "+"
+                        'Age': responseObj.centers[i].sessions[j].min_age_limit + "+",
+                        'Vaccine': responseObj.centers[i].sessions[j].vaccine
                     });
                 }
             }
@@ -435,7 +476,11 @@
                     for (i in responseObj.centers) {
                         for (j in responseObj.centers[i].sessions) {
                             if (responseObj.centers[i].sessions[j].available_capacity > 0) {
-                                notifyUser = true;
+                                var userAgePref = $('input[name=ageRadio]:checked').val();
+                                var userVaccinePref = $('input[name=vaccineRadio]:checked').val();
+                                if ((responseObj.centers[i].sessions[j].min_age_limit == userAgePref || userAgePref == "") && (responseObj.centers[i].sessions[j].vaccine === userVaccinePref || userVaccinePref === "")) {
+                                    notifyUser = true;
+                                }
                             }
                             slots.push({
                                 'Date': responseObj.centers[i].sessions[j].date,
@@ -443,7 +488,8 @@
                                 'Address': responseObj.centers[i].address + " - " + responseObj.centers[i].pincode,
                                 'Fee': responseObj.centers[i].fee_type,
                                 'Slots': responseObj.centers[i].sessions[j].available_capacity,
-                                'Age': responseObj.centers[i].sessions[j].min_age_limit + "+"
+                                'Age': responseObj.centers[i].sessions[j].min_age_limit + "+",
+                                'Vaccine': responseObj.centers[i].sessions[j].vaccine
                             });
                         }
                     }
